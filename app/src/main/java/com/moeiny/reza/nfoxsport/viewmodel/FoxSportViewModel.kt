@@ -27,7 +27,7 @@ class FoxSportViewModel(application: Application) : AndroidViewModel(application
     private  var allTeamData:List<TeamEntity>
     private  var allTopPlayerData:List<TopPlayerEntity>
 
-    
+
 
 
     init {

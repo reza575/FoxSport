@@ -1,13 +1,20 @@
 package com.moeiny.reza.nfoxsport.viewmodel
 
 import android.app.Application
+import android.content.Intent
+import android.view.View
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
+import com.google.gson.Gson
+import com.moeiny.reza.nfoxsport.MainActivity
 import com.moeiny.reza.nfoxsport.database.entitiy.*
 import com.moeiny.reza.nfoxsport.model.entity.Match
 import com.moeiny.reza.nfoxsport.model.entity.Stats
 import com.moeiny.reza.nfoxsport.presenter.MatchService
 import com.moeiny.reza.nfoxsport.repository.FoxSportRepository
 import com.moeiny.reza.nfoxsport.utils.FoxSportCallback
+import com.moeiny.reza.nfoxsport.view.HomeActivity
+import java.util.concurrent.CountDownLatch
 
 
 class FoxSportViewModel(application: Application) : AndroidViewModel(application) {
@@ -47,8 +54,8 @@ class FoxSportViewModel(application: Application) : AndroidViewModel(application
         foxSportRepository.deleteAllMatch()
     }
 
-    fun getmatch(matchId: String):MatchEntity{
-        return foxSportRepository.getMatch(matchId)
+    fun getmatch(matchId: String,stat_type:String):MatchEntity{
+        return foxSportRepository.getMatch(matchId,stat_type)
     }
 
     fun getmatchbyType(matchtype: String):MatchEntity{
@@ -78,8 +85,8 @@ class FoxSportViewModel(application: Application) : AndroidViewModel(application
         foxSportRepository.deleteAllPlayer()
     }
 
-    fun getPlayer(playerId: Int): PlayerEntity{
-        return foxSportRepository.getPlayer(playerId)
+    fun getPlayer(playerId: Int,team_Id:Int): PlayerEntity{
+        return foxSportRepository.getPlayer(playerId,team_Id)
     }
 
     fun getPlayerbyTeam(team_id: Int):List<PlayerEntity>{
@@ -108,8 +115,8 @@ class FoxSportViewModel(application: Application) : AndroidViewModel(application
         foxSportRepository.deleteAllStats()
     }
 
-    fun getStats(player_id: Int):StatsEntity{
-        return foxSportRepository.getstate(player_id)
+    fun getStat(player_id: Int,team_Id:Int):StatsEntity{
+        return foxSportRepository.getStat(player_id,team_Id)
     }
 
     fun getAllStats():List<StatsEntity>{
@@ -153,11 +160,15 @@ class FoxSportViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun delete(topPlayerEntity: TopPlayerEntity){
-        foxSportRepository.deleteTopPlayerst(topPlayerEntity)
+        foxSportRepository.deleteTopPlayers(topPlayerEntity)
     }
 
     fun deleteAllTopPlayers(){
         foxSportRepository.deleteAllTopPlayers()
+    }
+
+    fun getTopPlayer(match_id: String,match_type: String,team_id: Int,player_Id:Int):TopPlayerEntity{
+        return foxSportRepository.getTopPlayer(match_id,match_type,team_id,player_Id)
     }
 
     fun getTopPlayers(match_id: String,match_type: String,team_id: Int):List<TopPlayerEntity>{
@@ -171,44 +182,70 @@ class FoxSportViewModel(application: Application) : AndroidViewModel(application
 
 /////////////////////////////////////////////////////////////
 
-fun getMathInfo(){
+fun getMatchInfo(){
 
        lateinit var matchList:ArrayList<Match>
+       val lock =  CountDownLatch(1)
 
-        MatchService.getMatchesInfo(object : FoxSportCallback<List<Match>, Throwable> {
+
+    MatchService.getMatchesInfo(object : FoxSportCallback<List<Match>, Throwable> {
 
             override fun onSuccess(result: List<Match>) {
+                lock.countDown()
                 matchList = ArrayList<Match>()
                 matchList = result as ArrayList<Match>
                 for(i in 0..matchList.size-1){
                     var match=MatchEntity(matchList[i].match_id,matchList[i].team_A.id,matchList[i].team_B.id,matchList[i].stat_type)
-                    insert(match)
+                    if(getmatch(matchList[i].match_id,matchList[i].stat_type)==null)
+                          insert(match)
+
                     for(j in 0..matchList[i].team_A.top_players.size-1){
                         var topPlayer=TopPlayerEntity(matchList[i].match_id,matchList[i].stat_type,
-                            matchList[i].team_A.id,matchList[i].team_A.top_players[j].id)
-                        insert(topPlayer)
+                            matchList[i].team_A.id,matchList[i].team_A.top_players[j].id,matchList[i].team_A.top_players[j].full_name,
+                            matchList[i].team_A.top_players[j].jumper_number,matchList[i].team_A.top_players[j].short_name,
+                            matchList[i].team_A.top_players[j].position,matchList[i].team_A.top_players[j].stat_value)
+
+                        if(getTopPlayer(matchList[i].match_id,matchList[i].stat_type,
+                                        matchList[i].team_A.id,matchList[i].team_A.top_players[j].id)==null)
+                             insert(topPlayer)
+
+                        getStatInfo(matchList[i].team_A.id.toString(),matchList[i].team_A.top_players[j].id.toString())
                     }
 
                     for(j in 0..matchList[i].team_B.top_players.size-1){
                         var topPlayer=TopPlayerEntity(matchList[i].match_id,matchList[i].stat_type,
-                            matchList[i].team_B.id,matchList[i].team_B.top_players[j].id)
-                        insert(topPlayer)
+                            matchList[i].team_B.id,matchList[i].team_B.top_players[j].id,matchList[i].team_B.top_players[j].full_name,
+                            matchList[i].team_B.top_players[j].jumper_number,matchList[i].team_B.top_players[j].short_name,
+                            matchList[i].team_B.top_players[j].position,matchList[i].team_B.top_players[j].stat_value)
+                        if(getTopPlayer(matchList[i].match_id,matchList[i].stat_type,
+                                        matchList[i].team_B.id,matchList[i].team_B.top_players[j].id)==null)
+                                insert(topPlayer)
+
+                        getStatInfo(matchList[i].team_B.id.toString(),matchList[i].team_B.top_players[j].id.toString())
                     }
                 }
 
                 var teamA=TeamEntity(matchList[0].team_A.id,matchList[0].team_A.name,matchList[0].team_A.code,matchList[0].team_A.short_name)
                 var teamB=TeamEntity(matchList[0].team_B.id,matchList[0].team_B.name,matchList[0].team_B.code,matchList[0].team_B.short_name)
-                insert(teamA)
-                insert(teamB)
+                if(getTeam(matchList[0].team_A.id)==null)
+                    insert(teamA)
+                if(getTeam(matchList[0].team_B.id)==null)
+                    insert(teamB)
 
             }
 
             override fun onError(error: Throwable?) {
+                lock.countDown()
                 //      Toast.makeText(context, error.toString(), Toast.LENGTH_SHORT).show()
             }
 
             override fun onComplete() {
+                lock.countDown()
                 print("complete")
+                var view= HomeActivity.getView()
+                view.visibility= View.INVISIBLE
+                HomeActivity.move()
+
             }
 
         })
@@ -218,27 +255,34 @@ fun getMathInfo(){
     ///////////////////////////////
 
     fun getStatInfo(team_Id:String,player_Id:String) {
+
+        val lock =  CountDownLatch(1)
         lateinit var stats: Stats
 
 
         MatchService.getStatsInfo(team_Id,player_Id,object : FoxSportCallback<Stats, Throwable> {
 
             override fun onSuccess(result: Stats) {
+                lock.countDown()
                 stats = result
 
-                var stat=StatsEntity(stats.id,stats.surname,stats.position,stats.full_name,stats.short_name,
+                var stat=StatsEntity(stats.id,team_Id.toInt(),stats.surname,stats.position,stats.full_name,stats.short_name,
                     stats.date_of_birth,stats.height_cm,stats.other_names,stats.weight_kg,stats.last_match_id,
-                    stats.career_stats.toString(),stats.last_match_stats.toString(),stats.series_season_stats.toString())
+                    stats.career_stats.toString(),Gson().toJson(stats.last_match_stats),stats.series_season_stats.toString())
 
-                insert(stat)
+                if(getStat(stats.id,team_Id.toInt())==null)
+                    insert(stat)
+                var str=Gson()
 
             }
 
             override fun onError(error: Throwable?) {
+                lock.countDown()
                 //      Toast.makeText(context, error.toString(), Toast.LENGTH_SHORT).show()
             }
 
             override fun onComplete() {
+                lock.countDown()
                 print("complete")
             }
 

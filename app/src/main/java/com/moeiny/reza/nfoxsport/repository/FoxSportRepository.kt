@@ -24,8 +24,7 @@ class FoxSportRepository(application: Application){
 
     init {
         val db: AppDatabase = AppDatabase.getInstance(
-                application.applicationContext
-        )!!
+                application.applicationContext )!!
 
         matchDao = db.MatchDao()
         playerDao = db.PlayerDao()
@@ -58,15 +57,15 @@ class FoxSportRepository(application: Application){
     }
 
     fun deleteAllMatch(){
-        deleteAllMatch(matchDao).execute()
+       matchDao.deleteAll()
     }
 
     fun getAllMatch():List<MatchEntity>{
         return allMatchData
     }
 
-    fun getMatch(match_id:String):MatchEntity{
-        return matchDao.findByMatchId(match_id)
+    fun getMatch(match_id:String,stat_type:String):MatchEntity{
+        return matchDao.getmatch(match_id,stat_type)
     }
 
     fun getMatchbyType(stat_type:String):MatchEntity{
@@ -113,19 +112,6 @@ class FoxSportRepository(application: Application){
         }
     }
 
-
-    private class deleteAllMatch(matchDao: MatchDao): AsyncTask<Void, Void, Void>(){
-
-        private var matchDao:MatchDao
-        init{
-            this.matchDao=matchDao
-        }
-
-        override fun doInBackground(vararg p0: Void?): Void? {
-            matchDao.deleteAll()
-            return null
-        }
-    }
 ////////////////////////////////Player////////////////////////////
 
     fun insertPlayer(playerEntity: PlayerEntity){
@@ -141,18 +127,16 @@ class FoxSportRepository(application: Application){
     }
 
     fun deleteAllPlayer(){
-        deleteAllPlayer(playerDao).execute()
+        playerDao.deleteAll()
     }
 
-    fun getPlayer(playerId: Int):PlayerEntity{
-       return playerDao.findByPlayerId(playerId)
+    fun getPlayer(playerId: Int,team_Id:Int):PlayerEntity{
+       return playerDao.getPlayer(playerId,team_Id)
     }
 
     fun getPlayerbyTeam(teamId: Int):List<PlayerEntity>{
         return playerDao.findByTeam(teamId)
     }
-
-
 
     fun getAllPlayer():List<PlayerEntity>{
         return allPlayersData
@@ -169,7 +153,6 @@ class FoxSportRepository(application: Application){
             playerDao.insert(p0[0])
             return null
         }
-
     }
 
     private class PlayerUpdate(playerDao: PlayerDao): AsyncTask<PlayerEntity, Void, Void>(){
@@ -198,19 +181,6 @@ class FoxSportRepository(application: Application){
         }
     }
 
-    private class deleteAllPlayer(playerDao: PlayerDao): AsyncTask<Void, Void, Void>(){
-
-        private var playerDao:PlayerDao
-        init{
-            this.playerDao=playerDao
-        }
-
-        override fun doInBackground(vararg p0: Void?): Void? {
-            playerDao.deleteAll()
-            return null
-        }
-    }
-
     //////////////////////////////////////Stats //////////////////////////////////
 
     fun insertStats(statsEntity: StatsEntity){
@@ -226,11 +196,11 @@ class FoxSportRepository(application: Application){
     }
 
     fun deleteAllStats(){
-        deleteAllStats(statsDao).execute()
+        statsDao.deleteAll()
     }
 
-    fun getstate(player_id:Int):StatsEntity{
-        return statsDao.findByPlayerId(player_id)
+    fun getStat(player_id:Int,team_Id:Int):StatsEntity{
+        return statsDao.getStat(player_id,team_Id)
     }
 
 
@@ -278,19 +248,6 @@ class FoxSportRepository(application: Application){
         }
     }
 
-    private class deleteAllStats(statsDao: StatsDao): AsyncTask<Void, Void, Void>(){
-
-        private var statsDao:StatsDao
-        init{
-            this.statsDao=statsDao
-        }
-
-        override fun doInBackground(vararg p0: Void?): Void? {
-            statsDao.deleteAll()
-            return null
-        }
-    }
-
     //////////////////////////////// Team////////////////////////////
 
     fun insertTeam(teamEntity: TeamEntity){
@@ -306,7 +263,7 @@ class FoxSportRepository(application: Application){
     }
 
     fun deleteAllTeam(){
-        deleteAllTeam(teamDao).execute()
+       teamDao.deleteAll()
     }
 
     fun getTeam(teamId: Int):TeamEntity{
@@ -357,19 +314,6 @@ class FoxSportRepository(application: Application){
         }
     }
 
-    private class deleteAllTeam(teamDao: TeamDao): AsyncTask<Void, Void, Void>(){
-
-        private var teamDao:TeamDao
-        init{
-            this.teamDao=teamDao
-        }
-
-        override fun doInBackground(vararg p0: Void?): Void? {
-            teamDao.deleteAll()
-            return null
-        }
-    }
-
 ////////////////////////////////TopPlayers ////////////////////////////
 
     fun insertTopPlayers(topaPlayerEntity: TopPlayerEntity){
@@ -380,16 +324,20 @@ class FoxSportRepository(application: Application){
         TopPlayersUpdate(topPlayersDao).execute(topaPlayerEntity)
     }
 
-    fun deleteTopPlayerst(topaPlayerEntity: TopPlayerEntity){
+    fun deleteTopPlayers(topaPlayerEntity: TopPlayerEntity){
         TopPlayersDelete(topPlayersDao).execute(topaPlayerEntity)
     }
 
     fun deleteAllTopPlayers(){
-        deleteAllTopPlayers(topPlayersDao).execute()
+        topPlayersDao.deleteAll()
+    }
+
+    fun getTopPlayer(match_id: String,match_type: String,team_id: Int,player_Id:Int):TopPlayerEntity{
+        return topPlayersDao.getTopPlayer(match_id,match_type,team_id,player_Id)
     }
 
     fun getTopPlayers(match_id: String,match_type: String,team_id: Int):List<TopPlayerEntity>{
-        return topPlayersDao.findBymatchteam(match_id,match_type,team_id)
+        return topPlayersDao.getTopPlayers(match_id,match_type,team_id)
     }
 
     fun getAllTopPlayers():List<TopPlayerEntity>{
@@ -435,29 +383,6 @@ class FoxSportRepository(application: Application){
             return null
         }
     }
-
-    private class deleteAllTopPlayers(topPlayersDao: TopPlayersDao): AsyncTask<Void, Void, Void>(){
-
-        private var topPlayersDao:TopPlayersDao
-        init{
-            this.topPlayersDao=topPlayersDao
-        }
-
-        override fun doInBackground(vararg p0: Void?): Void? {
-            topPlayersDao.deleteAll()
-            return null
-        }
-    }
-
-
-
-
-    //////////////////Server methods///////////////////
-
-
-
-
-
 
 }
 

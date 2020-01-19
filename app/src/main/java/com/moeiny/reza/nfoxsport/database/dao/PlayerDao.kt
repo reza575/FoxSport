@@ -13,8 +13,8 @@ interface PlayerDao {
     @Query("SELECT * FROM Players WHERE team_Id = :id")
     fun findByTeam(id: Int): List<PlayerEntity>
 
-    @Query("SELECT * FROM Players WHERE player_Id = :id")
-    fun findByPlayerId(id: Int): PlayerEntity
+    @Query("SELECT * FROM Players WHERE player_Id = :id AND team_Id=:team_Id")
+    fun getPlayer(id: Int,team_Id:Int): PlayerEntity
 
     @Query("DELETE FROM Players")
     fun deleteAll()

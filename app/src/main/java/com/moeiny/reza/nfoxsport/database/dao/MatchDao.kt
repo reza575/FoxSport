@@ -12,8 +12,8 @@ interface MatchDao {
     @Query("SELECT * FROM Matches WHERE stat_type = :type")
     fun findByType(type: String): MatchEntity
 
-    @Query("SELECT * FROM matches WHERE match_Id = :id")
-    fun findByMatchId(id: String): MatchEntity
+    @Query("SELECT * FROM matches WHERE match_Id = :id AND stat_type=:stat_type")
+    fun getmatch(id: String,stat_type:String): MatchEntity
 
     @Query("DELETE FROM Matches")
     fun deleteAll()

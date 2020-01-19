@@ -1,7 +1,5 @@
 package com.moeiny.reza.nfoxsport
 
-import android.content.Context
-import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -9,13 +7,21 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.moeiny.reza.nfoxsport.adapter.PlayerAdapterA
 import com.moeiny.reza.nfoxsport.adapter.PlayerAdapterB
+import com.moeiny.reza.nfoxsport.database.entitiy.MatchEntity
+import com.moeiny.reza.nfoxsport.database.entitiy.StatsEntity
+import com.moeiny.reza.nfoxsport.database.entitiy.TeamEntity
+import com.moeiny.reza.nfoxsport.database.entitiy.TopPlayerEntity
 import com.moeiny.reza.nfoxsport.model.entity.Match
+import com.moeiny.reza.nfoxsport.model.entity.Stats
 import com.moeiny.reza.nfoxsport.presenter.MatchService
 import com.moeiny.reza.nfoxsport.utils.FoxSportCallback
+import com.moeiny.reza.nfoxsport.viewmodel.FoxSportViewModel
+import java.util.concurrent.CountDownLatch
 
 
 class MainActivity : AppCompatActivity() {
@@ -28,86 +34,60 @@ class MainActivity : AppCompatActivity() {
     lateinit var txtTeamBname: TextView
     lateinit var txtTeamBcode: TextView
     lateinit var txtTeamBshortname: TextView
-    // lateinit var viewModel: FoxSportViewModel
-
+    lateinit var viewModel: FoxSportViewModel
+    lateinit var matches:List<MatchEntity>
     lateinit var spiner: Spinner
     var index=0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        matchList = ArrayList<Match>()
         setUpView()
-        //   viewModel.getMathInfo()
-        // viewModel.getStatInfo()
-        getMatchInfo()
-    }
-
-    fun getMatchInfo() {
-
-        MatchService.getMatchesInfo(object : FoxSportCallback<List<Match>, Throwable> {
-
-            override fun onSuccess(result: List<Match>) {
-                matchList = ArrayList<Match>()
-                matchList = result as ArrayList<Match>
-                fillSpinner()
-
-                loadData(0)
-            }
-
-            override fun onError(error: Throwable?) {
-                //      Toast.makeText(context, error.toString(), Toast.LENGTH_SHORT).show()
-            }
-
-            override fun onComplete() {
-                print("complete")
-            }
-
-        })
+        matches=viewModel.getAllMatch()
+        fillSpinner()
+        loadData(0)
     }
 
     fun loadData(index:Int){
-        txtTeamAname.text = "Name : " + matchList[index].team_A.name
-        txtTeamAcode.text = "Code : " + matchList[index].team_A.code
-        txtTeamAshortname.text = "Short Name : " + matchList[index].team_A.short_name
-        txtTeamBname.text = "Name : " + matchList[index].team_B.name
-        txtTeamBcode.text = "Code : " + matchList[index].team_B.code
-        txtTeamBshortname.text = "Short Name : " + matchList[index].team_B.short_name
-
+        var teamA=viewModel.getTeam(matches[index].teamA_Id)
+        var teamB=viewModel.getTeam(matches[index].teamB_Id)
+        txtTeamAname.text = "Name : " + teamA.team_name
+        txtTeamAcode.text = "Code : " + teamA.team_code
+        txtTeamAshortname.text = "Short Name : " + teamA.team_shortname
+        txtTeamBname.text = "Name : " +teamB.team_name
+        txtTeamBcode.text = "Code : " + teamB.team_code
+        txtTeamBshortname.text = "Short Name : " + teamB.team_shortname
 
         setDataOnRecycler(index)
-
     }
 
     fun fillSpinner(){
+
         var statArray=ArrayList<String>()
-        for(i in 0..matchList.size-1)
+        for(i in 0..matches.size-1)
         {
-            statArray.add(matchList[i].stat_type)
+            statArray.add(matches[i].stat_type)
         }
 
         val adp1 = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, statArray)
         adp1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spiner.setAdapter(adp1)
-
-        val sharedPref: SharedPreferences = this!!.getSharedPreferences("Info", Context.MODE_PRIVATE)
-        val editor: SharedPreferences.Editor = sharedPref.edit()
-        editor.putString("teamA_id", matchList[0].team_A.id.toString())
-        editor!!.commit()
-
-        editor.putString("teamB_id", matchList[0].team_B.id.toString())
-        editor!!.commit()
     }
 
     fun setDataOnRecycler(index:Int) {
+        var teamA_topplayers=viewModel.getTopPlayers(matches[index].match_Id,matches[index].stat_type,matches[index].teamA_Id)
+        var teamB_topplayers=viewModel.getTopPlayers(matches[index].match_Id,matches[index].stat_type,matches[index].teamB_Id)
+
         recyclerViewA.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-        recyclerViewA.adapter = PlayerAdapterA(this, matchList[index].team_A.top_players)
+        recyclerViewA.adapter = PlayerAdapterA(this,teamA_topplayers)
 
         recyclerViewB.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-        recyclerViewB.adapter = PlayerAdapterB(this, matchList[index].team_B.top_players)
+        recyclerViewB.adapter = PlayerAdapterA(this, teamB_topplayers)
     }
 
     fun setUpView() {
-        //     viewModel = ViewModelProviders.of(this).get(FoxSportViewModel::class.java)
+        viewModel = ViewModelProviders.of(this).get(FoxSportViewModel::class.java)
         txtTeamAname = findViewById(R.id.txt_main_teamA_name)
         txtTeamAcode = findViewById(R.id.txt_main_teamA_code)
         txtTeamAshortname = findViewById(R.id.txt_main_teamA_shortname)
@@ -124,20 +104,18 @@ class MainActivity : AppCompatActivity() {
             override fun onItemSelected(parentView: AdapterView<*>, selectedItemView: View, position: Int, id: Long) {
 
                 var s= spiner.selectedItem.toString()
-                for(i in 0..matchList.size-1)
+                for(i in 0..matches.size-1)
                 {
-                    if (matchList[i].stat_type.equals(s)){
+                    if (matches[i].stat_type.equals(s)){
                         index=i
                     }
-
                 }
                 loadData(index)
             }
 
             override fun onNothingSelected(parentView: AdapterView<*>) {
-                // your code here
             }
-
         })
     }
+
 }

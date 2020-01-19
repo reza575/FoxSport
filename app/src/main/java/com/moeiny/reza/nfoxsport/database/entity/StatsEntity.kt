@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 
 @Entity (tableName = "Stats")
 class StatsEntity (@PrimaryKey var player_Id: Int,
+                   @ColumnInfo var team_Id: Int,
                    @ColumnInfo var surName: String,
                    @ColumnInfo var position: String,
                    @ColumnInfo var full_name: String,

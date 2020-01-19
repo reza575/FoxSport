@@ -27,7 +27,7 @@ public abstract class AppDatabase : RoomDatabase() {
     companion object {
 
         private var instance: AppDatabase? = null
-        public var DB_NAME = "LifeGaurd"
+        public var DB_NAME = "FoxSport"
 
         @Synchronized
         fun getInstance(context: Context): AppDatabase {
@@ -56,7 +56,7 @@ public abstract class AppDatabase : RoomDatabase() {
     private val MatchDao = db?.MatchDao()
 
     override fun doInBackground(vararg p0: Unit?) {
-       // deviceDao?.insert(DeviceEntity("", ""))
+       // MatchDao?.insert(MatchDaoEntity("", ""))
 
       }
     }

@@ -10,8 +10,8 @@ interface StatsDao {
     @Query("SELECT * FROM Stats")
     fun getAll(): List<StatsEntity>
 
-    @Query("SELECT * FROM Stats WHERE player_Id = :id")
-    fun findByPlayerId(id: Int): StatsEntity
+    @Query("SELECT * FROM Stats WHERE player_Id = :id AND team_Id=:team_Id")
+    fun getStat(id: Int,team_Id:Int): StatsEntity
 
     @Query("DELETE FROM Stats")
     fun deleteAll()
